@@ -1,0 +1,60 @@
+CREATE DATABASE IF NOT EXISTS inventory CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE inventory;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'user',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS materials (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(50) NOT NULL COMMENT '物料名称',
+  brand VARCHAR(50) NOT NULL COMMENT '品牌',
+  model VARCHAR(50) NOT NULL COMMENT '型号',
+  spec VARCHAR(50) NOT NULL COMMENT '规格',
+  quantity INT NOT NULL DEFAULT 0 COMMENT '数量',
+  remark VARCHAR(255) COMMENT '备注',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_item (name, brand, model, spec)
+);
+
+CREATE TABLE IF NOT EXISTS records (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  material_id INT DEFAULT NULL,
+  count INT NOT NULL,
+  type VARCHAR(10) NOT NULL COMMENT 'in=入库, out=出库, export=导出',
+  status VARCHAR(10) NOT NULL DEFAULT 'pending' COMMENT 'pending=待审批, approved=已通过, rejected=已拒绝',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (material_id) REFERENCES materials(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_borrowed (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  material_id INT NOT NULL,
+  count INT NOT NULL DEFAULT 0 COMMENT '当前未归还数量',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_user_material (user_id, material_id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (material_id) REFERENCES materials(id)
+);
+
+INSERT INTO users (username, password, role)
+VALUES ('admin', '$2a$10$UQfYbuMUb/BL6hO0zi77tO7F3D2wNdwKdFTC9TZonzyXKHV6FGrai', 'super_admin');
+
+INSERT INTO users (username, password, role)
+VALUES ('user1', '$2a$10$UQfYbuMUb/BL6hO0zi77tO7F3D2wNdwKdFTC9TZonzyXKHV6FGrai', 'user');
+
+ALTER TABLE users MODIFY COLUMN role VARCHAR(20) NOT NULL DEFAULT 'user';
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS model VARCHAR(50) NOT NULL DEFAULT '' COMMENT '型号' AFTER brand;
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS remark VARCHAR(255) COMMENT '备注' AFTER quantity;
+ALTER TABLE records MODIFY COLUMN material_id INT DEFAULT NULL;

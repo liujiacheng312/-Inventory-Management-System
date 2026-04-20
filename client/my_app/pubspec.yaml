@@ -1,0 +1,28 @@
+name: my_app
+description: "库存管理系统"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.2.0
+  shared_preferences: ^2.2.2
+  file_picker: ^8.0.0+1
+  intl: ^0.19.0
+  url_launcher: ^6.2.0
+  desktop_drop: ^0.7.0
+  cross_file: ^0.3.4+2
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
