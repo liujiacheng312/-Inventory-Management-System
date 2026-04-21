@@ -17,6 +17,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const double _compactBreakpoint = 720;
+
   int _currentIndex = 0;
   late final List<Widget> _pages;
   late final List<_NavItem> _navItems;
@@ -64,7 +66,9 @@ class _HomePageState extends State<HomePage> {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(
+        MediaQuery.sizeOf(context).width < _compactBreakpoint ? 16 : 24,
+      ),
       decoration: BoxDecoration(
         color: AppTheme.panel.withOpacity(0.82),
         borderRadius: BorderRadius.circular(30),
@@ -74,33 +78,38 @@ class _HomePageState extends State<HomePage> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 860;
+          final isCompact = constraints.maxWidth < _compactBreakpoint;
+          final roleLabel = widget.user.isAdmin ? '管理员' : '普通用户';
+          final description = widget.user.isAdmin
+              ? '管理员工作台，集中处理库存、审批与批量导入。'
+              : '查看库存状态、提交领用并追踪个人记录。';
+
+          final userChip = _InfoChip(
+            icon: Icons.person_outline_rounded,
+            label: widget.user.username,
+            color: AppTheme.mint,
+          );
 
           final leading = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 _currentTitle,
-                style: textTheme.headlineMedium?.copyWith(fontSize: 30),
+                style: textTheme.headlineMedium?.copyWith(
+                  fontSize: isCompact ? 26 : 30,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
-                widget.user.isAdmin
-                    ? '管理员工作台，集中处理库存、审批与批量导入。'
-                    : '查看库存状态、提交领用并追踪个人记录。',
-                style: textTheme.bodyLarge,
+                description,
+                style: textTheme.bodyLarge?.copyWith(
+                  fontSize: isCompact ? 14 : null,
+                ),
               ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _InfoChip(
-                    icon: Icons.person_outline_rounded,
-                    label: widget.user.username,
-                    color: AppTheme.mint,
-                  ),
-                ],
-              ),
+              if (!isCompact) ...[
+                const SizedBox(height: 18),
+                userChip,
+              ],
             ],
           );
 
@@ -109,8 +118,7 @@ class _HomePageState extends State<HomePage> {
                 isWide ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppTheme.ink,
                   borderRadius: BorderRadius.circular(20),
@@ -126,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      widget.user.isAdmin ? '管理员' : '普通用户',
+                      roleLabel,
                       style: textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                       ),
@@ -142,6 +150,61 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           );
+
+          if (isCompact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _currentTitle,
+                        style: textTheme.headlineMedium?.copyWith(fontSize: 22),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 46,
+                      height: 46,
+                      child: OutlinedButton(
+                        onPressed: _logout,
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Icon(Icons.logout_rounded, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.inkMuted,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    userChip,
+                    _InfoChip(
+                      icon: Icons.verified_user_outlined,
+                      label: '身份 · $roleLabel',
+                      color: AppTheme.ink,
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
 
           if (isWide) {
             return Row(
@@ -168,15 +231,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildNavigation(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < _compactBreakpoint;
+
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(isCompact ? 6 : 8),
       decoration: BoxDecoration(
         color: AppTheme.panel.withOpacity(0.82),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(isCompact ? 24 : 28),
         border: Border.all(color: Colors.white.withOpacity(0.7)),
         boxShadow: AppTheme.softShadow,
       ),
       child: NavigationBar(
+        height: isCompact ? 64 : null,
         selectedIndex: _currentIndex,
         backgroundColor: Colors.transparent,
         destinations: _navItems
@@ -197,26 +263,33 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < _compactBreakpoint;
+
     return Scaffold(
       body: DecoratedBox(
         decoration: const BoxDecoration(gradient: AppTheme.pageGradient),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            padding: EdgeInsets.fromLTRB(
+              isCompact ? 14 : 20,
+              isCompact ? 12 : 18,
+              isCompact ? 14 : 20,
+              isCompact ? 12 : 20,
+            ),
             child: Column(
               children: [
                 _buildHeader(context),
-                const SizedBox(height: 18),
+                SizedBox(height: isCompact ? 14 : 18),
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
                       color: AppTheme.panel.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(34),
+                      borderRadius: BorderRadius.circular(isCompact ? 24 : 34),
                       border: Border.all(color: Colors.white.withOpacity(0.6)),
                       boxShadow: AppTheme.softShadow,
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(34),
+                      borderRadius: BorderRadius.circular(isCompact ? 24 : 34),
                       child: IndexedStack(
                         index: _currentIndex,
                         children: _pages,
@@ -224,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: isCompact ? 14 : 18),
                 _buildNavigation(context),
               ],
             ),
@@ -248,8 +321,13 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < _HomePageState._compactBreakpoint;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 14,
+        vertical: isCompact ? 8 : 10,
+      ),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(18),
@@ -258,13 +336,14 @@ class _InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
+          Icon(icon, size: isCompact ? 16 : 18, color: color),
+          SizedBox(width: isCompact ? 6 : 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppTheme.ink,
                   fontWeight: FontWeight.w700,
+                  fontSize: isCompact ? 12 : null,
                 ),
           ),
         ],

@@ -116,117 +116,158 @@ class _RecordPageState extends State<RecordPage> {
     final pendingCount =
         _records.where((record) => record.status == 'pending').length;
 
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF4F8FC),
-            Color(0xFFFDF4EC),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.isAdmin ? '流转记录总览' : '我的操作记录',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontSize: 28,
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 640;
+        const metricSpacing = 10.0;
+        final metricWidth = isCompact
+            ? (constraints.maxWidth - metricSpacing * 2) / 3
+            : 180.0;
+
+        return Container(
+          padding: EdgeInsets.all(isCompact ? 16 : 22),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFF4F8FC),
+                Color(0xFFFDF4EC),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(isCompact ? 24 : 30),
           ),
-          const SizedBox(height: 8),
-          Text(
-            widget.isAdmin
-                ? '查看所有用户的入库、出库和审批状态，快速发现待处理事项。'
-                : '查看你的领用与处理进度，了解每一条申请的最新状态。',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 14,
-            runSpacing: 14,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _RecordMetric(
-                label: '总记录',
-                value: '${_records.length}',
-                color: AppTheme.ink,
-                icon: Icons.layers_outlined,
+              Text(
+                widget.isAdmin ? '记录概览' : '我的记录',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: isCompact ? 20 : 28,
+                    ),
               ),
-              _RecordMetric(
-                label: '已通过',
-                value: '$approvedCount',
-                color: AppTheme.mint,
-                icon: Icons.check_circle_outline,
+              const SizedBox(height: 4),
+              Text(
+                widget.isAdmin ? '查看审批与处理进度。' : '查看你的领用与处理进度。',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              _RecordMetric(
-                label: '待审批',
-                value: '$pendingCount',
-                color: AppTheme.gold,
-                icon: Icons.hourglass_top_rounded,
+              SizedBox(height: isCompact ? 12 : 18),
+              Wrap(
+                spacing: metricSpacing,
+                runSpacing: metricSpacing,
+                children: [
+                  SizedBox(
+                    width: metricWidth,
+                    child: _RecordMetric(
+                      label: '总记录',
+                      value: '${_records.length}',
+                      color: AppTheme.ink,
+                      icon: Icons.layers_outlined,
+                      compact: isCompact,
+                    ),
+                  ),
+                  SizedBox(
+                    width: metricWidth,
+                    child: _RecordMetric(
+                      label: '已通过',
+                      value: '$approvedCount',
+                      color: AppTheme.mint,
+                      icon: Icons.check_circle_outline,
+                      compact: isCompact,
+                    ),
+                  ),
+                  SizedBox(
+                    width: metricWidth,
+                    child: _RecordMetric(
+                      label: '待审批',
+                      value: '$pendingCount',
+                      color: AppTheme.gold,
+                      icon: Icons.hourglass_top_rounded,
+                      compact: isCompact,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildFilterBar() {
+  Widget _buildFilterBar(BuildContext context) {
     const statuses = [
       ('all', '全部'),
       ('pending', '待审批'),
       ('approved', '已通过'),
       ('rejected', '已拒绝'),
     ];
+    final isCompact = MediaQuery.sizeOf(context).width < 640;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.74),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(isCompact ? 20 : 26),
       ),
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: statuses
-            .map(
-              (entry) => ChoiceChip(
-                label: Text(entry.$2),
-                selected: _statusFilter == entry.$1,
-                onSelected: (_) {
-                  setState(() => _statusFilter = entry.$1);
-                },
+      child: isCompact
+          ? SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: statuses
+                    .map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(entry.$2),
+                          selected: _statusFilter == entry.$1,
+                          onSelected: (_) {
+                            setState(() => _statusFilter = entry.$1);
+                          },
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
             )
-            .toList(),
-      ),
+          : Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: statuses
+                  .map(
+                    (entry) => ChoiceChip(
+                      label: Text(entry.$2),
+                      selected: _statusFilter == entry.$1,
+                      onSelected: (_) {
+                        setState(() => _statusFilter = entry.$1);
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.78),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
           const Icon(
             Icons.history_toggle_off_rounded,
-            size: 72,
+            size: 64,
             color: AppTheme.inkMuted,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Text(
             '暂无记录',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             '当前筛选条件下还没有可展示的记录。',
             style: Theme.of(context).textTheme.bodyLarge,
@@ -237,7 +278,8 @@ class _RecordPageState extends State<RecordPage> {
     );
   }
 
-  Widget _buildRecordCard(RecordItem record) {
+  Widget _buildRecordCard(BuildContext context, RecordItem record) {
+    final isCompact = MediaQuery.sizeOf(context).width < 640;
     final statusColor = _statusColor(record.status);
     final typeColor = record.type == 'in'
         ? AppTheme.mint
@@ -246,49 +288,54 @@ class _RecordPageState extends State<RecordPage> {
             : AppTheme.ink;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isCompact ? 16 : 20),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.84),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(isCompact ? 24 : 28),
         border: Border.all(color: Colors.white.withOpacity(0.72)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                height: 48,
-                width: 48,
+                height: isCompact ? 42 : 48,
+                width: isCompact ? 42 : 48,
                 decoration: BoxDecoration(
                   color: typeColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(_typeIcon(record.type), color: typeColor),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       record.name ?? '物品 #${record.materialId}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${record.brand ?? ''} | ${record.spec ?? ''}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text(
                   _statusText(record.status),
@@ -300,10 +347,10 @@ class _RecordPageState extends State<RecordPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _RecordBadge(
                 icon: _typeIcon(record.type),
@@ -340,23 +387,24 @@ class _RecordPageState extends State<RecordPage> {
     }
 
     final filtered = _filteredRecords;
+    final isCompact = MediaQuery.sizeOf(context).width < 640;
 
     return RefreshIndicator(
       onRefresh: load,
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(isCompact ? 14 : 20),
         children: [
           _buildHero(context),
-          const SizedBox(height: 16),
-          _buildFilterBar(),
-          const SizedBox(height: 16),
+          SizedBox(height: isCompact ? 12 : 16),
+          _buildFilterBar(context),
+          SizedBox(height: isCompact ? 12 : 16),
           if (filtered.isEmpty)
-            _buildEmptyState()
+            _buildEmptyState(context)
           else
             ...filtered.map(
               (record) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: _buildRecordCard(record),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildRecordCard(context, record),
               ),
             ),
         ],
@@ -370,44 +418,74 @@ class _RecordMetric extends StatelessWidget {
   final String value;
   final Color color;
   final IconData icon;
+  final bool compact;
 
   const _RecordMetric({
     required this.label,
     required this.value,
     required this.color,
     required this.icon,
+    required this.compact,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 180,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(compact ? 12 : 18),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.78),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(compact ? 18 : 24),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 42,
-            width: 42,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(14),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 32,
+                  width: 32,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 11,
+                      ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 42,
+                  width: 42,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: color),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 4),
+                Text(label, style: Theme.of(context).textTheme.bodyMedium),
+              ],
             ),
-            child: Icon(icon, color: color),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
     );
   }
 }

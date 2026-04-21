@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const os = require('os');
 
 const { bootstrapDatabase } = require('./utils/bootstrap');
 
 const app = express();
+const HOST = process.env.HOST || '0.0.0.0';
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -32,11 +35,33 @@ app.get('/', (req, res) => {
   });
 });
 
+function getLanAddresses() {
+  const networkInterfaces = os.networkInterfaces();
+  const addresses = [];
+
+  Object.values(networkInterfaces).forEach((items = []) => {
+    items.forEach((item) => {
+      if (item.family === 'IPv4' && !item.internal) {
+        addresses.push(item.address);
+      }
+    });
+  });
+
+  return [...new Set(addresses)];
+}
+
 async function startServer() {
   try {
     await bootstrapDatabase();
-    app.listen(3000, () => {
-      console.log('Server running on http://localhost:3000');
+    app.listen(PORT, HOST, () => {
+      console.log(`Server running on http://${HOST}:${PORT}`);
+
+      const lanAddresses = getLanAddresses();
+      if (HOST === '0.0.0.0' && lanAddresses.length > 0) {
+        lanAddresses.forEach((address) => {
+          console.log(`LAN access: http://${address}:${PORT}`);
+        });
+      }
     });
   } catch (error) {
     console.error('服务器启动失败:', error);

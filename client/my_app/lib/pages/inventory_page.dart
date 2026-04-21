@@ -387,6 +387,7 @@ class InventoryPageState extends State<InventoryPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildHero(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(22),
@@ -475,10 +476,10 @@ class InventoryPageState extends State<InventoryPage> {
 
   Widget _buildSearchBar() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.72),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(22),
       ),
       child: TextField(
         controller: _searchController,
@@ -502,6 +503,7 @@ class InventoryPageState extends State<InventoryPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildMaterialCard(MaterialItem item) {
     final quantityColor = _quantityColor(item.quantity);
 
@@ -645,6 +647,377 @@ class InventoryPageState extends State<InventoryPage> {
     );
   }
 
+  ButtonStyle _compactOutlinedButtonStyle({Color? foregroundColor}) {
+    return OutlinedButton.styleFrom(
+      foregroundColor: foregroundColor ?? AppTheme.ink,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    );
+  }
+
+  ButtonStyle _compactFilledButtonStyle({
+    Color? backgroundColor,
+    Color? foregroundColor,
+  }) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: backgroundColor,
+      foregroundColor: foregroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    );
+  }
+
+  Widget _buildCompactActionRow(Widget leading, Widget trailing) {
+    return Row(
+      children: [
+        Expanded(child: SizedBox(height: 56, child: leading)),
+        const SizedBox(width: 12),
+        Expanded(child: SizedBox(height: 56, child: trailing)),
+      ],
+    );
+  }
+
+  Widget _buildResponsiveSummaryCard({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required bool compact,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: EdgeInsets.all(compact ? 12 : 18),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.78),
+        borderRadius: BorderRadius.circular(compact ? 18 : 24),
+        border: Border.all(color: Colors.white.withOpacity(0.7)),
+      ),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 34,
+                  width: 34,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  value,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: textTheme.bodyMedium?.copyWith(fontSize: 11),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 42,
+                  width: 42,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: color),
+                ),
+                const SizedBox(height: 18),
+                Text(value, style: textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(label, style: textTheme.bodyMedium),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildResponsiveHero(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 600;
+        const summarySpacing = 10.0;
+        final summaryWidth = isCompact
+            ? (constraints.maxWidth - summarySpacing * 2) / 3
+            : 180.0;
+        final summaries = [
+          _buildResponsiveSummaryCard(
+            context: context,
+            compact: isCompact,
+            label: '物料种类',
+            value: '${_materials.length}',
+            icon: Icons.category_outlined,
+            color: AppTheme.ink,
+          ),
+          _buildResponsiveSummaryCard(
+            context: context,
+            compact: isCompact,
+            label: '库存总数',
+            value: '$_totalQuantity',
+            icon: Icons.stacked_bar_chart_rounded,
+            color: AppTheme.mint,
+          ),
+          _buildResponsiveSummaryCard(
+            context: context,
+            compact: isCompact,
+            label: '低库存预警',
+            value: '$_lowStockCount',
+            icon: Icons.warning_amber_rounded,
+            color: AppTheme.gold,
+          ),
+        ];
+
+        return Container(
+          padding: EdgeInsets.all(isCompact ? 16 : 22),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFFDF7F0),
+                Color(0xFFF0F6FA),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(isCompact ? 26 : 30),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isCompact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.isAdmin ? '库存控制台' : '可领用库存',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontSize: 20,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.isAdmin
+                          ? '集中查看库存健康度，快速新增、编辑和维护物料。'
+                          : '查询当前库存状态，找到需要的物料并发起领用。',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    if (widget.isAdmin) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showMaterialDialog(),
+                          icon: const Icon(Icons.add),
+                          label: const Text('新增物料'),
+                        ),
+                      ),
+                    ],
+                  ],
+                )
+              else
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 540),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.isAdmin ? '库存控制台' : '可领用库存',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(fontSize: 28),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.isAdmin
+                                ? '集中查看库存健康度，快速新增、编辑和维护物料。'
+                                : '查询当前库存状态，找到需要的物料并发起领用。',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (widget.isAdmin)
+                      ElevatedButton.icon(
+                        onPressed: () => _showMaterialDialog(),
+                        icon: const Icon(Icons.add),
+                        label: const Text('新增物料'),
+                      ),
+                  ],
+                ),
+              SizedBox(height: isCompact ? 12 : 18),
+              Wrap(
+                spacing: summarySpacing,
+                runSpacing: summarySpacing,
+                children: [
+                  for (var index = 0; index < summaries.length; index++)
+                    SizedBox(
+                      width: summaryWidth,
+                      child: summaries[index],
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildResponsiveMaterialCard(MaterialItem item) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 520;
+        final quantityColor = _quantityColor(item.quantity);
+
+        final editButton = OutlinedButton.icon(
+          onPressed: () => _showMaterialDialog(item: item),
+          icon: const Icon(Icons.edit_outlined),
+          label: const Text('编辑'),
+          style: isCompact ? _compactOutlinedButtonStyle() : null,
+        );
+        final deleteButton = OutlinedButton.icon(
+          onPressed: () => _deleteItem(item),
+          icon: const Icon(Icons.delete_outline_rounded),
+          label: const Text('删除'),
+          style: isCompact
+              ? _compactOutlinedButtonStyle(foregroundColor: AppTheme.danger)
+              : OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.danger,
+                ),
+        );
+        final takeButton = ElevatedButton.icon(
+          onPressed: item.quantity > 0 ? () => _takeItem(item) : null,
+          icon: const Icon(Icons.shopping_bag_outlined),
+          label: Text(item.quantity > 0 ? '领用' : '库存不足'),
+          style: isCompact ? _compactFilledButtonStyle() : null,
+        );
+        final returnButton = ElevatedButton.icon(
+          onPressed: () => _returnItem(item),
+          icon: const Icon(Icons.assignment_return_outlined),
+          label: const Text('归还'),
+          style: isCompact
+              ? _compactFilledButtonStyle(
+                  backgroundColor: AppTheme.mint,
+                  foregroundColor: Colors.white,
+                )
+              : ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.mint,
+                  foregroundColor: Colors.white,
+                ),
+        );
+
+        return Container(
+          padding: EdgeInsets.all(isCompact ? 16 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.84),
+            borderRadius: BorderRadius.circular(isCompact ? 24 : 28),
+            border: Border.all(color: Colors.white.withOpacity(0.7)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontSize: isCompact ? 18 : null,
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _TinyBadge(label: item.brand, color: AppTheme.ink),
+                            _TinyBadge(
+                              label: item.model,
+                              color: AppTheme.accent,
+                            ),
+                            _TinyBadge(label: item.spec, color: AppTheme.mint),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _StockBadge(
+                    quantity: item.quantity,
+                    color: quantityColor,
+                    compact: isCompact,
+                  ),
+                ],
+              ),
+              if (item.remark.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.canvas.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    item.remark,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.ink,
+                        ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 18),
+              if (isCompact && widget.isAdmin) ...[
+                _buildCompactActionRow(editButton, deleteButton),
+                const SizedBox(height: 12),
+                _buildCompactActionRow(takeButton, returnButton),
+              ] else if (isCompact) ...[
+                _buildCompactActionRow(takeButton, returnButton),
+              ] else
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: widget.isAdmin
+                      ? [
+                          editButton,
+                          deleteButton,
+                          takeButton,
+                          returnButton,
+                        ]
+                      : [
+                          takeButton,
+                          returnButton,
+                        ],
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildEmptyState() {
     final isSearching = _query.isNotEmpty;
 
@@ -692,23 +1065,24 @@ class InventoryPageState extends State<InventoryPage> {
     }
 
     final filteredMaterials = _filteredMaterials;
+    final isCompact = MediaQuery.sizeOf(context).width < 640;
 
     return RefreshIndicator(
       onRefresh: load,
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(isCompact ? 14 : 20),
         children: [
-          _buildHero(context),
-          const SizedBox(height: 16),
+          _buildResponsiveHero(context),
+          SizedBox(height: isCompact ? 14 : 16),
           _buildSearchBar(),
-          const SizedBox(height: 16),
+          SizedBox(height: isCompact ? 14 : 16),
           if (filteredMaterials.isEmpty)
             _buildEmptyState()
           else
             ...filteredMaterials.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
-                child: _buildMaterialCard(item),
+                child: _buildResponsiveMaterialCard(item),
               ),
             ),
         ],
@@ -802,6 +1176,62 @@ class _TinyBadge extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
       ),
+    );
+  }
+}
+
+class _StockBadge extends StatelessWidget {
+  final int quantity;
+  final Color color;
+  final bool compact;
+
+  const _StockBadge({
+    required this.quantity,
+    required this.color,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 12 : 14,
+        vertical: compact ? 10 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(compact ? 16 : 18),
+      ),
+      child: compact
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$quantity',
+                  style: textTheme.titleMedium?.copyWith(color: color),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '库存',
+                  style: textTheme.bodyMedium?.copyWith(color: color),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$quantity',
+                  style: textTheme.titleLarge?.copyWith(color: color),
+                ),
+                Text(
+                  '库存',
+                  style: textTheme.bodyMedium?.copyWith(color: color),
+                ),
+              ],
+            ),
     );
   }
 }
